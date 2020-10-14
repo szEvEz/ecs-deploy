@@ -383,7 +383,21 @@ function createNewTaskDefJson() {
 
 function registerNewTaskDefinition() {
     # Register the new task definition, and store its ARN
-    NEW_TASKDEF=`$AWS_ECS register-task-definition --cli-input-json "$NEW_DEF" | jq -r .taskDefinition.taskDefinitionArn`
+    if [ $TASK_DEFINITION_FILE == false ]; then
+        NEW_TASKDEF=`$AWS_ECS register-task-definition --cli-input-json "$NEW_DEF" | jq -r .taskDefinition.taskDefinitionArn`
+    else
+        echo "#############################################"
+        echo 'OLD TASK DEFINTION'
+        echo "#############################################"
+        echo "$TASK_DEFINITION"
+
+        echo "#############################################"
+        echo 'NEW TASK DEFINTION'
+        echo "#############################################"
+        echo "$taskDefinition"
+        NEW_TASKDEF=`$AWS_ECS register-task-definition --cli-input-json "$taskDefinition" | jq -r .taskDefinition.taskDefinitionArn`
+    fi
+
 }
 
 function rollback() {
@@ -397,7 +411,7 @@ function updateServiceForceNewDeployment() {
 }
 
 function updateService() {
-    if [[ $(echo ${NEW_DEF} | jq ".containerDefinitions[0].healthCheck != null") == true ]]; then
+    if [[ $(echo ${taskDefinition} | jq ".containerDefinitions[0].healthCheck != null") == true ]]; then
         checkFieldName="healthStatus"
         checkFieldValue="HEALTHY"
     else
